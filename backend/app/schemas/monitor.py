@@ -2,22 +2,15 @@
 
 from __future__ import annotations
 
-from uuid import UUID
 from urllib.parse import urlparse
-
-
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class MonitorConfig(BaseModel):
-    """The portion of a monitor needed by the check runner.
+class HTTPMonitorSettings(BaseModel):
+    """Validated HTTP settings shared by monitor creation and execution."""
 
-    This is intentionally separate from the database model. The runner should
-    only need the configuration required to execute one request.
-    """
-
-    monitor_id: UUID
     url: str = Field(min_length=1, max_length=2_048)
     timeout_seconds: float = Field(default=5.0, gt=0, le=60)
     expected_status_codes: list[int] = Field(default_factory=lambda: [200], min_length=1)
@@ -36,3 +29,20 @@ class MonitorConfig(BaseModel):
         if any(status_code < 100 or status_code > 599 for status_code in value):
             raise ValueError("expected_status_codes must contain valid HTTP status codes")
         return value
+
+
+class MonitorCreate(HTTPMonitorSettings):
+    """Validated user input for creating a persisted monitor."""
+
+    name: str = Field(min_length=1, max_length=120)
+    interval_seconds: int = Field(gt=0, le=86_400)
+
+
+class MonitorConfig(HTTPMonitorSettings):
+    """The portion of a persisted monitor needed by the check runner.
+
+    This is intentionally separate from the database model. The runner should
+    only need the configuration required to execute one request.
+    """
+
+    monitor_id: UUID
