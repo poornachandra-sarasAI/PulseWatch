@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from urllib.parse import urlparse
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class HTTPMonitorSettings(BaseModel):
@@ -46,3 +47,23 @@ class MonitorConfig(HTTPMonitorSettings):
     """
 
     monitor_id: UUID
+
+
+class MonitorRead(BaseModel):
+    """Monitor data returned by the REST API."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    url: str
+    interval_seconds: int
+    timeout_seconds: float
+    expected_status_codes: list[int]
+    is_active: bool
+    current_status: str
+    consecutive_failures: int
+    last_checked_at: datetime | None
+    next_run_at: datetime
+    created_at: datetime
+    updated_at: datetime

@@ -7,7 +7,19 @@ from typing import TYPE_CHECKING
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, Index, Integer, String, Text, func, text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Float,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import ARRAY, SMALLINT, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,6 +39,7 @@ class Monitor(Base):
             "current_status IN ('UNKNOWN', 'UP', 'DOWN')",
             name="ck_monitors_current_status",
         ),
+        UniqueConstraint("url", name="uq_monitors_url"),
         Index(
             "ix_monitors_active_next_run",
             "next_run_at",

@@ -1,4 +1,5 @@
 services:
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
     container_name: pulsewatch-db
@@ -15,6 +16,67 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - pulsewatch-net
+
+  # ── FastAPI backend ────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pulsewatch-api
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-pulsewatch}:${POSTGRES_PASSWORD:-pulsewatch}@db:5432/${POSTGRES_DB:-pulsewatch}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - pulsewatch-net
+
+  # ── Background scheduler ───────────────────────────────────────────────────
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pulsewatch-scheduler
+    command: ["python", "backend/scripts/run_scheduler.py", "--poll-interval", "5"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-pulsewatch}:${POSTGRES_PASSWORD:-pulsewatch}@db:5432/${POSTGRES_DB:-pulsewatch}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  # ── Next.js frontend ───────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    container_name: pulsewatch-frontend
+    environment:
+      # The browser fetches this URL directly, so it must be reachable from
+      # the host machine — not the internal Docker network hostname.
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3001:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
 
 volumes:
   postgres_data:
+
+networks:
+  pulsewatch-net:
+    driver: bridge
