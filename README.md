@@ -9,7 +9,7 @@ A locally deployable HTTP uptime-monitoring tool. PulseWatch periodically checks
 **Prerequisites**: Docker + Docker Compose (v2).
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/poornachandra-sarasAI/PulseWatch
 cd PulseWatch
 
 # Copy env template (no secrets to set for local use)
