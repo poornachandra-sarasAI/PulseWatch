@@ -155,9 +155,3 @@ Query params:
 │  • Writes CheckResult rows                    │
 └───────────────────────────────────────────────┘
 ```
-
----
-
-## Out of Scope (v0)
-
-Authentication, alerting, retries, queues, Redis, multi-region probes, Kubernetes, and public deployment belong to later versions.
